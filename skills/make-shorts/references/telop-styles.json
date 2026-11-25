@@ -1,0 +1,241 @@
+{
+  "_comment": "Telop styles for edit_short.py. Colors are #RRGGBB. fill = text color; inner/outer = [color, width px] outline rings (outer is drawn outside inner); size = visible glyph size in px on the 1080x1920 canvas (converted to the renderer's font size with font_em); rot = degrees (counter-clockwise); anim = none | pop | slam. User overrides: ~/.stream-shorts/telop-styles.json (same keys, merged by style name).",
+  "fonts": {
+    "caption": "M PLUS Rounded 1c ExtraBold",
+    "title": "M PLUS 1p Black",
+    "chapter": "Yuji Syuku",
+    "note": "M PLUS Rounded 1c ExtraBold"
+  },
+  "title_colors": {
+    "y": "#FFD21A",
+    "r": "#FF2A2A",
+    "m": "#FF2E8C",
+    "o": "#FF8A00",
+    "b": "#1E78FF",
+    "c": "#22C6FF",
+    "p": "#A62BFF",
+    "g": "#22C55E",
+    "k": "#111111",
+    "w": "#FFFFFF"
+  },
+  "title": {
+    "size": 120,
+    "line_gap": 2,
+    "inner": [
+      "#000000",
+      8
+    ],
+    "inner_k": [
+      "#FFFFFF",
+      6
+    ],
+    "outer": [
+      "#000000",
+      3
+    ],
+    "shadow": 3,
+    "scale_x": 86
+  },
+  "styles": {
+    "white": {
+      "fill": "#FFFFFF",
+      "inner": [
+        "#000000",
+        7
+      ],
+      "outer": null,
+      "size": 112,
+      "anim": "none"
+    },
+    "purple": {
+      "fill": "#A31CFF",
+      "inner": [
+        "#FFFFFF",
+        8
+      ],
+      "outer": [
+        "#2A0A3A",
+        3
+      ],
+      "size": 112,
+      "anim": "none"
+    },
+    "red": {
+      "fill": "#FF1E1E",
+      "inner": [
+        "#FFFFFF",
+        8
+      ],
+      "outer": [
+        "#3A0000",
+        3
+      ],
+      "size": 112,
+      "anim": "none"
+    },
+    "pink": {
+      "fill": "#FF3D9A",
+      "inner": [
+        "#FFFFFF",
+        8
+      ],
+      "outer": [
+        "#3A0020",
+        3
+      ],
+      "size": 112,
+      "anim": "none"
+    },
+    "yellow": {
+      "fill": "#FFD21A",
+      "inner": [
+        "#4A2A00",
+        7
+      ],
+      "outer": [
+        "#FFFFFF",
+        4
+      ],
+      "size": 112,
+      "anim": "none"
+    },
+    "orange": {
+      "fill": "#FF8A00",
+      "inner": [
+        "#FFFFFF",
+        8
+      ],
+      "outer": [
+        "#3A1A00",
+        3
+      ],
+      "size": 112,
+      "anim": "none"
+    },
+    "cyan": {
+      "fill": "#2CC8FF",
+      "inner": [
+        "#FFFFFF",
+        8
+      ],
+      "outer": [
+        "#002A3A",
+        3
+      ],
+      "size": 112,
+      "anim": "none"
+    },
+    "black": {
+      "fill": "#141414",
+      "inner": [
+        "#FFFFFF",
+        8
+      ],
+      "outer": [
+        "#000000",
+        2
+      ],
+      "size": 112,
+      "anim": "none"
+    },
+    "shout": {
+      "fill": "#FF1E1E",
+      "inner": [
+        "#000000",
+        7
+      ],
+      "outer": [
+        "#FFFFFF",
+        9
+      ],
+      "size": 160,
+      "rot": 6,
+      "anim": "slam"
+    },
+    "shout_v": {
+      "fill": "#FF1E1E",
+      "inner": [
+        "#000000",
+        7
+      ],
+      "outer": [
+        "#FFFFFF",
+        9
+      ],
+      "size": 190,
+      "anim": "slam",
+      "vertical": true
+    },
+    "emph": {
+      "fill": "#FFD21A",
+      "inner": [
+        "#000000",
+        7
+      ],
+      "outer": [
+        "#FFFFFF",
+        6
+      ],
+      "size": 130,
+      "rot": 4,
+      "anim": "pop"
+    },
+    "small": {
+      "fill": "#FFFFFF",
+      "inner": [
+        "#000000",
+        6
+      ],
+      "outer": null,
+      "size": 64,
+      "anim": "none"
+    }
+  },
+  "note": {
+    "size": 52,
+    "fill": "#111111",
+    "box": "#FFFFFF",
+    "box_alpha": 0.95,
+    "radius": 22,
+    "pad": [
+      26,
+      18
+    ],
+    "shadow": 6,
+    "max_chars": 13
+  },
+  "comment": {
+    "size": 48,
+    "fill": "#111111",
+    "box": "#FFFFFF",
+    "box_alpha": 0.95,
+    "radius": 26,
+    "pad": [
+      26,
+      16
+    ],
+    "shadow": 6,
+    "max_chars": 12,
+    "icon": "#9AA0A6"
+  },
+  "chapter": {
+    "size": 62,
+    "fill": "#111111",
+    "box": "#E9E9E9",
+    "box_alpha": 0.9,
+    "radius": 18,
+    "pad": [
+      26,
+      14
+    ],
+    "bold": true,
+    "text_bord": 1
+  },
+  "font_em": {
+    "M PLUS Rounded 1c ExtraBold": 0.69,
+    "M PLUS 1p Black": 0.69,
+    "Yuji Syuku": 0.8,
+    "Noto Sans JP": 0.69,
+    "_default": 0.7
+  }
+}

@@ -1,0 +1,294 @@
+{
+  "_comment": "Built-in layout presets. src = [x, y, w, h] as 0-1 ratios of the source frame; dst = [x, y, w, h] in pixels on the 1080x1920 canvas. fit: cover (fill & crop) | contain (fit whole). subtitle_margin_v = px from bottom to subtitle baseline area; hook_margin_v = px from top to hook title. User presets in ~/.stream-shorts/layouts.json override these by name.",
+  "talk-center": {
+    "description": "雑談向け: 16:9の中央を縦に切り抜いて全画面（話者が中央にいる配信）",
+    "background": "black",
+    "panels": [
+      {
+        "src": [
+          0.342,
+          0.0,
+          0.316,
+          1.0
+        ],
+        "dst": [
+          0,
+          0,
+          1080,
+          1920
+        ],
+        "fit": "cover"
+      }
+    ],
+    "subtitle_margin_v": 520,
+    "hook_margin_v": 200,
+    "cut_mode": "speech"
+  },
+  "talk-fit": {
+    "description": "雑談向け: 画面全体を中央に収め、上下はぼかし背景。上にタイトル、下に字幕",
+    "background": "blur",
+    "panels": [
+      {
+        "src": [
+          0.0,
+          0.0,
+          1.0,
+          1.0
+        ],
+        "dst": [
+          0,
+          656,
+          1080,
+          608
+        ],
+        "fit": "contain"
+      }
+    ],
+    "subtitle_margin_v": 420,
+    "hook_margin_v": 380,
+    "cut_mode": "speech"
+  },
+  "game-zoom": {
+    "description": "ゲーム実況向け: 画面中央を4:3で少し拡大して中央に配置、上下ぼかし背景",
+    "background": "blur",
+    "panels": [
+      {
+        "src": [
+          0.125,
+          0.0,
+          0.75,
+          1.0
+        ],
+        "dst": [
+          0,
+          520,
+          1080,
+          810
+        ],
+        "fit": "cover"
+      }
+    ],
+    "subtitle_margin_v": 380,
+    "hook_margin_v": 260,
+    "cut_mode": "audio"
+  },
+  "game-split": {
+    "description": "ゲーム実況向け: 上に顔枠、下にゲーム画面の上下分割（顔枠の位置は shorts-layout で要調整）",
+    "background": "black",
+    "panels": [
+      {
+        "src": [
+          0.74,
+          0.64,
+          0.26,
+          0.36
+        ],
+        "dst": [
+          0,
+          0,
+          1080,
+          640
+        ],
+        "fit": "cover"
+      },
+      {
+        "src": [
+          0.25,
+          0.0,
+          0.5,
+          1.0
+        ],
+        "dst": [
+          0,
+          640,
+          1080,
+          1280
+        ],
+        "fit": "cover"
+      }
+    ],
+    "subtitle_margin_v": 460,
+    "hook_margin_v": 540,
+    "cut_mode": "audio"
+  },
+  "official-game": {
+    "description": "公式切り抜き風(ゲーム): 上に白帯タイトル、中央にゲーム画面、下に顔枠を大きく。顔枠の位置は shorts-layout で要調整",
+    "background": "black",
+    "panels": [
+      {
+        "src": [
+          0.0,
+          0.0,
+          1.0,
+          1.0
+        ],
+        "dst": [
+          0,
+          345,
+          1080,
+          640
+        ],
+        "fit": "cover"
+      },
+      {
+        "src": [
+          0.78,
+          0.6,
+          0.2,
+          0.32
+        ],
+        "dst": [
+          0,
+          985,
+          1080,
+          935
+        ],
+        "fit": "cover"
+      }
+    ],
+    "boxes": [
+      {
+        "dst": [
+          0,
+          0,
+          1080,
+          345
+        ],
+        "color": "#FFFFFF"
+      }
+    ],
+    "title_band": true,
+    "anchors": {
+      "title": [
+        540,
+        172
+      ],
+      "main": [
+        540,
+        985
+      ],
+      "top": [
+        540,
+        520
+      ],
+      "face": [
+        540,
+        1480
+      ],
+      "center": [
+        540,
+        1200
+      ],
+      "chapter": [
+        1050,
+        372
+      ],
+      "note": [
+        36,
+        380
+      ]
+    },
+    "cut_mode": "audio"
+  },
+  "official-face": {
+    "description": "公式切り抜き風: 顔枠を画面いっぱいに（掴み・大リアクション用）。顔枠の位置は要調整",
+    "background": "black",
+    "panels": [
+      {
+        "src": [
+          0.8,
+          0.55,
+          0.18,
+          0.45
+        ],
+        "dst": [
+          0,
+          0,
+          1080,
+          1920
+        ],
+        "fit": "cover"
+      }
+    ],
+    "title_band": false,
+    "anchors": {
+      "main": [
+        540,
+        1500
+      ],
+      "center": [
+        540,
+        960
+      ],
+      "face": [
+        540,
+        1500
+      ],
+      "top": [
+        540,
+        500
+      ]
+    },
+    "cut_mode": "off"
+  },
+  "official-talk": {
+    "description": "公式切り抜き風(雑談): 上に色帯タイトル、下は配信画面を大きく（中央寄せ）",
+    "background": "blur",
+    "panels": [
+      {
+        "src": [
+          0.2,
+          0.0,
+          0.6,
+          1.0
+        ],
+        "dst": [
+          0,
+          250,
+          1080,
+          1670
+        ],
+        "fit": "cover"
+      }
+    ],
+    "boxes": [
+      {
+        "dst": [
+          0,
+          0,
+          1080,
+          250
+        ],
+        "color": "#1E7BFF"
+      }
+    ],
+    "title_band": true,
+    "anchors": {
+      "title": [
+        540,
+        125
+      ],
+      "main": [
+        540,
+        1350
+      ],
+      "top": [
+        540,
+        500
+      ],
+      "face": [
+        540,
+        1350
+      ],
+      "center": [
+        540,
+        960
+      ],
+      "note": [
+        36,
+        300
+      ]
+    },
+    "cut_mode": "speech"
+  }
+}
