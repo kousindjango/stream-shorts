@@ -110,6 +110,8 @@ def add_nvidia_dll_dirs() -> None:
 
 def check_whisper(test: bool) -> dict:
     res = {"faster_whisper": importlib.util.find_spec("faster_whisper") is not None,
+           "opencv": importlib.util.find_spec("cv2") is not None,
+           "yt_dlp": importlib.util.find_spec("yt_dlp") is not None,
            "numpy": importlib.util.find_spec("numpy") is not None,
            "cuda_devices": 0, "gpu_name": None, "cuda_test": None}
     add_nvidia_dll_dirs()
@@ -165,9 +167,45 @@ FONT_URLS = {
 }
 
 
+MODEL_URLS = {
+    # Real-face detector for the face-following crop (OpenCV Zoo YuNet, MIT)
+    "face_detection_yunet_2023mar.onnx": "https://github.com/opencv/opencv_zoo/raw/main/models/face_detection_yunet/face_detection_yunet_2023mar.onnx",
+    # Anime face detector for VTuber avatars (nagadomi/lbpcascade_animeface, MIT)
+    "lbpcascade_animeface.xml": "https://raw.githubusercontent.com/nagadomi/lbpcascade_animeface/master/lbpcascade_animeface.xml",
+}
+
+
+def _urlretrieve(url: str, dst: Path) -> None:
+    """Download using the OS certificate store when available (python.org builds on Windows
+    often lack the CA chain GitHub needs)."""
+    import urllib.request
+    try:
+        import truststore
+        truststore.inject_into_ssl()
+    except Exception:  # noqa: BLE001
+        pass
+    urllib.request.urlretrieve(url, dst)
+
+
+def install_models() -> list[str]:
+    d = CONFIG_DIR / "models"
+    d.mkdir(parents=True, exist_ok=True)
+    done = []
+    for name, url in MODEL_URLS.items():
+        dst = d / name
+        if dst.exists() and dst.stat().st_size > 10_000:
+            done.append(f"{name} (exists)")
+            continue
+        try:
+            _urlretrieve(url, dst)
+            done.append(name)
+        except Exception as e:  # noqa: BLE001
+            done.append(f"{name} FAILED: {e}")
+    return done
+
+
 def install_fonts() -> list[str]:
     """Download the official-style telop fonts (SIL OFL, Google Fonts) into ~/.stream-shorts/fonts."""
-    import urllib.request
     d = CONFIG_DIR / "fonts"
     d.mkdir(parents=True, exist_ok=True)
     done = []
@@ -177,7 +215,7 @@ def install_fonts() -> list[str]:
             done.append(f"{name} (exists)")
             continue
         try:
-            urllib.request.urlretrieve(url, dst)
+            _urlretrieve(url, dst)
             done.append(name)
         except Exception as e:  # noqa: BLE001
             done.append(f"{name} FAILED: {e}")
@@ -187,12 +225,16 @@ def install_fonts() -> list[str]:
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--install-fonts", action="store_true")
+    ap.add_argument("--install-models", action="store_true", help="アニメ顔検出モデル（VTuber追従用）を取得")
     ap.add_argument("--test-whisper", action="store_true")
     ap.add_argument("--write", action="store_true")
     a = ap.parse_args()
     if a.install_fonts:
         for line in install_fonts():
             print("font:", line)
+    if a.install_models:
+        for line in install_models():
+            print("model:", line)
 
     ff = check_ffmpeg()
     wh = check_whisper(a.test_whisper)
@@ -222,6 +264,10 @@ def main() -> None:
         problems.append("numpy が未導入")
     if not wh["faster_whisper"]:
         problems.append("faster-whisper が未導入")
+    if not wh["opencv"]:
+        problems.append("opencv-python が未導入（顔追従クロップに必要・任意）")
+    if not wh["yt_dlp"]:
+        problems.append("yt-dlp が未導入（URL から直接作るときに必要・任意）")
     if wh["gpu_name"] and not wh["cuda_devices"]:
         problems.append("NVIDIA GPU はあるが文字起こしで使えていない（cuBLAS/cuDNN 未導入の可能性）")
     if str(wh.get("cuda_test", "")).startswith("failed"):

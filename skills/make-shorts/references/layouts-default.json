@@ -290,5 +290,95 @@
       ]
     },
     "cut_mode": "speech"
+  },
+  "talk-track": {
+    "description": "雑談・カメラ配信向け: 顔を自動で追いかけて縦に切り抜き（OpenCV）",
+    "background": "black",
+    "panels": [
+      {
+        "src": [
+          0,
+          0,
+          1,
+          1
+        ],
+        "dst": [
+          0,
+          0,
+          1080,
+          1920
+        ],
+        "fit": "track",
+        "detector": "face",
+        "smooth": 0.35,
+        "deadzone": 0.06
+      }
+    ],
+    "subtitle_margin_v": 520,
+    "hook_margin_v": 200,
+    "anchors": {
+      "main": [
+        540,
+        1450
+      ],
+      "top": [
+        540,
+        500
+      ],
+      "center": [
+        540,
+        960
+      ],
+      "face": [
+        540,
+        1450
+      ]
+    },
+    "cut_mode": "speech"
+  },
+  "vtuber-track": {
+    "description": "VTuber向け: アニメ顔検出でアバターを追いかけて縦に切り抜き（要 check_env.py --install-models）",
+    "background": "blur",
+    "panels": [
+      {
+        "src": [
+          0,
+          0,
+          1,
+          1
+        ],
+        "dst": [
+          0,
+          420,
+          1080,
+          1080
+        ],
+        "fit": "track",
+        "detector": "anime",
+        "smooth": 0.3,
+        "deadzone": 0.08
+      }
+    ],
+    "subtitle_margin_v": 380,
+    "hook_margin_v": 200,
+    "anchors": {
+      "main": [
+        540,
+        1580
+      ],
+      "top": [
+        540,
+        330
+      ],
+      "center": [
+        540,
+        960
+      ],
+      "face": [
+        540,
+        1300
+      ]
+    },
+    "cut_mode": "speech"
   }
 }

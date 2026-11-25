@@ -334,7 +334,8 @@ def even(v: float) -> int:
     return max(2, int(round(v / 2)) * 2)
 
 
-def layout_graph(layout: dict, src_w: int, src_h: int, vin: str, vout: str, fps: int) -> str:
+def layout_graph(layout: dict, src_w: int, src_h: int, vin: str, vout: str, fps: int,
+                 tracks: dict | None = None) -> str:
     panels = layout["panels"]
     bg = layout.get("background", "blur")
     n = len(panels) + 1
@@ -352,7 +353,18 @@ def layout_graph(layout: dict, src_w: int, src_h: int, vin: str, vout: str, fps:
         cx, cy = int(src_w * rx), int(src_h * ry)
         cx, cy = min(cx, src_w - cw), min(cy, src_h - ch)
         dx, dy, dw, dh = p["dst"]
-        if p.get("fit", "cover") == "cover":
+        if p.get("fit") == "track":
+            from track_face import window_size
+            if tracks and i in tracks:
+                name, x0, y0, (ww, wh) = tracks[i]
+            else:
+                name = None
+                ww, wh = window_size(cw, ch, dw, dh)
+                x0, y0 = cx + (cw - ww) // 2 // 2 * 2, cy + (ch - wh) // 2 // 2 * 2
+            pre = f"sendcmd=f={name}," if name else ""
+            f = f"[s{i}]{pre}crop@trk{i}=w={ww}:h={wh}:x={x0}:y={y0},scale={dw}:{dh},setsar=1[p{i}]"
+            ox, oy = str(dx), str(dy)
+        elif p.get("fit", "cover") == "cover":
             f = (f"[s{i}]crop={cw}:{ch}:{cx}:{cy},scale={dw}:{dh}:force_original_aspect_ratio=increase,"
                  f"crop={dw}:{dh},setsar=1[p{i}]")
             ox, oy = str(dx), str(dy)
@@ -463,7 +475,9 @@ def render_clip(src: Path, info: dict, transcript: dict | None, clip: dict, layo
         g.append("[0:a]anull[ac]")
     if cut:
         g[0] = g[0].replace("[0:v]select", f"[0:v]fps={fps},select")
-    g.append(layout_graph(layout, info["width"], info["height"], "vc", "vl", fps))
+    from track_face import prepare_tracks
+    tracks = prepare_tracks(layout, src, info, start, dur, keep, fps, outdir, cid)
+    g.append(layout_graph(layout, info["width"], info["height"], "vc", "vl", fps, tracks))
     g.append(f"[vl]{ass_filter(ass_name, outdir, st)}[vout]")
     g.append(f"[ac]loudnorm=I={st.get('loudness_lufs', -14)}:TP=-1.5:LRA=11,aresample=48000[aout]")
     out_name = f"{cid}.mp4"
@@ -494,7 +508,9 @@ def preview(src: Path, info: dict, at: float, layout: dict, out: Path, st: dict)
     ass_name = out.stem + "_preview.ass"
     write_ass(outdir / ass_name, [{"start": 0, "end": 5, "text": wrap(st.get("_preview_text") or "字幕はこの位置に出ます サンプル", SUB_LINE_CHARS)}],
               st.get("_preview_hook") or "タイトル（フック）の位置", 5, layout, st["font"], bool(st.get("font_bold", True)))
-    g = ";".join([layout_graph(layout, info["width"], info["height"], "0:v", "vl", 30),
+    from track_face import prepare_tracks
+    tracks = prepare_tracks(layout, src, info, at, 0.4, [[0.0, 0.4]], 30, outdir, "preview")
+    g = ";".join([layout_graph(layout, info["width"], info["height"], "0:v", "vl", 30, tracks),
                   f"[vl]{ass_filter(ass_name, outdir, st)}[vout]"])
     run([ffmpeg_bin(), "-y", "-hide_banner", "-loglevel", "error", "-ss", f"{at:.3f}", "-i", str(src),
          "-filter_complex", g, "-map", "[vout]", "-frames:v", "1", "-update", "1", out.name], cwd=outdir)

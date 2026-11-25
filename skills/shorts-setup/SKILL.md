@@ -54,6 +54,13 @@ The check script is `scripts/check_env.py` under this skill's base directory.
    ```
    M PLUS Rounded 1c ExtraBold (captions), M PLUS 1p Black (titles), Yuji Syuku (chapter labels).
 
+   Optional extras (ask before installing):
+   - URL input: `python -m pip install -U yt-dlp`
+   - Face-following crop: `python -m pip install -U "opencv-python>=4.8,<5"` (OpenCV 5 builds drop the
+     cascade detector the anime-face model needs), then
+     `python "<base>/scripts/check_env.py" --install-models` — downloads YuNet (real faces, OpenCV Zoo,
+     MIT) and lbpcascade_animeface (VTuber avatars, nagadomi, MIT) to `~/.stream-shorts/models/`.
+
 5. Save the recommended settings:
    ```
    python "<base>/scripts/check_env.py" --write

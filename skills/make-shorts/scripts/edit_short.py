@@ -253,13 +253,15 @@ def render_segment(src, info, seg, layout, keep, out_path, st) -> None:
     else:
         g.append(f"[0:v]fps={fps}[vc]")
         g.append(f"[0:a]afade=t=in:st=0:d={fd},afade=t=out:st={max(0.0, dur - fd):.3f}:d={fd}[ac]")
-    g.append(layout_graph(layout, info["width"], info["height"], "vc", "vout", fps))
+    from track_face import prepare_tracks
+    tracks = prepare_tracks(layout, src, info, a, dur, keep, fps, out_path.parent, out_path.stem)
+    g.append(layout_graph(layout, info["width"], info["height"], "vc", "vout", fps, tracks))
     g.append("[ac]aresample=48000,aformat=channel_layouts=stereo[aout]")
     inter = dict(st, crf=max(10, int(st.get("crf", 20)) - 6))
     run([ffmpeg_bin(), "-y", "-hide_banner", "-loglevel", "error", "-nostats",
          "-ss", f"{a:.3f}", "-t", f"{dur:.3f}", "-i", str(src), "-filter_complex", ";".join(g),
          "-map", "[vout]", "-map", "[aout]", *encoder_args(inter, "normal"), "-pix_fmt", "yuv420p",
-         "-c:a", "pcm_s16le", str(out_path)])
+         "-c:a", "pcm_s16le", str(out_path)], cwd=out_path.parent)
 
 
 def anchors(layout: dict) -> dict:
@@ -557,6 +559,19 @@ def cmd_render(a, st, layouts) -> None:
           f" → {outdir / out_name}")
     for w in warn:
         print(f"  [warn] {w}")
+    # machine-readable summary for automation (idea from AI-Youtube-Shorts-Generator --output-json)
+    cands = load_json(W / "candidates.json", {}) or {}
+    cinfo = next((c for c in cands.get("clips", []) if c.get("id") == a.clip), {})
+    results = load_json(outdir / "results.json", {}) or {}
+    results[a.clip] = {
+        "file": str(outdir / out_name), "duration": round(total, 1), "title": e.get("title"),
+        "hook_sentence": cinfo.get("hook_sentence"), "score": cinfo.get("score"),
+        "virality_reason": cinfo.get("virality_reason") or cinfo.get("reason"),
+        "segments": [s["src"] for s in e["segments"]], "captions": len(caps),
+        "notes": len(e.get("notes", [])), "sfx": len(sfx_events), "warnings": warn,
+        "source": (meta.get("origin") or {}).get("webpage_url") or meta.get("video"),
+    }
+    save_json(outdir / "results.json", results)
 
 
 # ============================================================== sheet
@@ -577,7 +592,7 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("cmd", choices=["draft", "show", "render", "sheet"])
     ap.add_argument("--workdir", required=True)
-    ap.add_argument("--clip", required=True)
+    ap.add_argument("--clip", required=True, nargs="+", help="render は複数指定可（c01 c02 …）")
     ap.add_argument("--layout")
     ap.add_argument("--segments", help='montage: "start~end[:cut[:layout]], ..." in source time')
     ap.add_argument("--force", action="store_true")
@@ -587,7 +602,11 @@ def main() -> None:
     a = ap.parse_args()
     st = load_settings()
     layouts = load_layouts()
-    {"draft": cmd_draft, "show": cmd_show, "render": cmd_render, "sheet": cmd_sheet}[a.cmd](a, st, layouts)
+    fn = {"draft": cmd_draft, "show": cmd_show, "render": cmd_render, "sheet": cmd_sheet}[a.cmd]
+    clips = a.clip if a.cmd in ("render", "sheet") else a.clip[:1]
+    for cid in clips:
+        a.clip = cid
+        fn(a, st, layouts)
 
 
 if __name__ == "__main__":

@@ -7,7 +7,10 @@ Steps (each is skipped when its output already exists, unless --force):
   4. digest/*.txt    timestamped transcript chunks annotated with excitement markers,
                      plus peaks.txt, for Claude to read when picking candidates
 
+The input may also be an HTTPS URL (YouTube / Twitch VOD); it is downloaded with yt-dlp first.
+
 Usage:
+  python -u prepare.py "https://www.youtube.com/watch?v=XXXX" [--download-dir DIR] [--max-height 1080]
   python -u prepare.py "D:/録画/2026-11-15 配信.mp4" [--workdir DIR] [--model large-v3-turbo]
                     [--hotwords "ゲーム名 キャラ名"]
                     [--device cuda|cpu] [--skip-transcribe] [--chunk-min 20] [--force]
@@ -15,6 +18,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import re
 import time
 import wave
 from pathlib import Path
@@ -181,12 +185,15 @@ def build_digest(transcript: dict | None, energy: dict, workdir: Path, chunk_min
         old.unlink()
     span = chunk_min * 60
     n_chunks = max(1, int(energy["seconds"] // span) + 1)
+    overlap = 60  # each chunk repeats the last minute of the previous one, so a highlight that
+    #               straddles a chunk boundary is still seen whole (idea from AI-Youtube-Shorts-Generator)
     for k in range(n_chunks):
-        lo, hi = k * span, (k + 1) * span
+        lo, hi = max(0, k * span - overlap), (k + 1) * span
         body = [l for t, l in out_lines if lo <= t < hi]
         if not body:
             continue
-        header = f"# {fmt_ts(lo)} – {fmt_ts(hi)}  (▲ = 直前2分の平均より声・音が大きい箇所)\n"
+        ov = f"  先頭{overlap}秒は前チャンクと重複" if k else ""
+        header = f"# {fmt_ts(lo)} – {fmt_ts(hi)}  (▲ = 直前2分の平均より声・音が大きい箇所){ov}\n"
         (ddir / f"chunk_{k + 1:02d}.txt").write_text(header + "\n".join(body) + "\n", encoding="utf-8")
 
     # peaks.txt: each peak with ±20 s of surrounding speech
@@ -198,9 +205,56 @@ def build_digest(transcript: dict | None, energy: dict, workdir: Path, chunk_min
     print(f"      digest/ に {len(list(ddir.glob('chunk_*.txt')))} ファイル、peaks.txt を出力")
 
 
+# ---------------------------------------------------------------- 0. URL input
+ALLOWED_HOSTS = {
+    "youtube.com", "www.youtube.com", "m.youtube.com", "youtu.be", "www.youtu.be",
+    "twitch.tv", "www.twitch.tv", "m.twitch.tv",
+}
+
+
+def validate_url(value: str) -> str:
+    """Only HTTPS YouTube / Twitch URLs are passed to the downloader (adapted from
+    AI-Youtube-Shorts-Generator's url_validation, MIT)."""
+    from urllib.parse import urlsplit
+    msg = "[error] URL は https の YouTube / Twitch のみ対応です（ローカルのファイルパスも可）"
+    try:
+        u = urlsplit(value.strip())
+        host, port = u.hostname, u.port
+    except ValueError:
+        raise SystemExit(msg)
+    if (u.scheme.lower() != "https" or not host or host.lower() not in ALLOWED_HOSTS
+            or u.username or u.password or port not in (None, 443)):
+        raise SystemExit(msg)
+    return value.strip()
+
+
+def download(url: str, dest: Path, max_height: int) -> tuple[Path, dict]:
+    try:
+        import yt_dlp
+    except ImportError:
+        raise SystemExit("[error] yt-dlp が未導入です: python -m pip install -U yt-dlp")
+    dest.mkdir(parents=True, exist_ok=True)
+    opts = {
+        "format": f"bv*[height<={max_height}][ext=mp4]+ba[ext=m4a]/b[height<={max_height}]/b",
+        "merge_output_format": "mp4",
+        "outtmpl": str(dest / "%(id)s.%(ext)s"),
+        "noplaylist": True, "quiet": True, "no_warnings": True, "noprogress": True,
+    }
+    print(f"[0/4] ダウンロード中: {url}")
+    with yt_dlp.YoutubeDL(opts) as ydl:
+        info = ydl.extract_info(url, download=True)
+        path = Path(ydl.prepare_filename(info)).with_suffix(".mp4")
+    meta = {k: info.get(k) for k in ("id", "title", "channel", "uploader", "upload_date",
+                                      "webpage_url", "duration", "was_live")}
+    print(f"      {meta.get('title')} / {meta.get('channel') or meta.get('uploader')} → {path.name}")
+    return path, meta
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("video")
+    ap.add_argument("video", help="録画ファイルのパス、または https の YouTube / Twitch URL")
+    ap.add_argument("--download-dir", help="URL 入力時の保存先（既定: カレントフォルダ）")
+    ap.add_argument("--max-height", type=int, default=1080)
     ap.add_argument("--workdir")
     ap.add_argument("--model")
     ap.add_argument("--device")
@@ -212,7 +266,13 @@ def main() -> None:
     a = ap.parse_args()
 
     st = load_settings()
-    src = Path(a.video).resolve()
+    origin = {}
+    if re.match(r"^[a-zA-Z][a-zA-Z0-9+.-]*://", a.video):
+        url = validate_url(a.video)
+        src, origin = download(url, Path(a.download_dir or ".").resolve(), a.max_height)
+    else:
+        src = Path(a.video)
+    src = src.resolve()
     if not src.exists():
         raise SystemExit(f"[error] ファイルがありません: {src}")
     workdir = Path(a.workdir).resolve() if a.workdir else src.with_name(src.stem + "_shorts")
@@ -236,7 +296,9 @@ def main() -> None:
         else:
             transcript = load_json(tr_path)
     build_digest(transcript, energy, workdir, a.chunk_min)
-    save_json(workdir / "source.json", {"video": str(src), **info})
+    prev = load_json(workdir / "source.json", {}) or {}
+    save_json(workdir / "source.json", {**prev, "video": str(src), **info,
+                                        **({"origin": origin} if origin else {})})
     print("完了")
 
 

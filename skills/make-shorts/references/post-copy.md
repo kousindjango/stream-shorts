@@ -18,6 +18,8 @@ Write one section per rendered clip in `<workdir>/clips/posts.md`:
 ```
 
 ## Rules
+- If `source.json` has `origin` (the video came from a URL), credit it: use `origin.webpage_url` as
+  the full-stream link and name `origin.channel` in the description.
 - Base everything on what actually happens in the clip. Do not exaggerate beyond it or invent
   details.
 - **YouTube title**: up to 100 characters, but keep the hook in the first ~30 characters (that is all
